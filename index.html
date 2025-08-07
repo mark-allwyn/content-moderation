@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Content Moderation API - Test Interface</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .form-section {
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        input[type="url"], select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="url"]:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: #5a6fd8;
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .results {
+            margin-top: 30px;
+            display: none;
+        }
+
+        .result-card {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-left: 5px solid #ddd;
+        }
+
+        .result-card.pass {
+            border-left-color: #28a745;
+            background: #d4edda;
+        }
+
+        .result-card.fail {
+            border-left-color: #dc3545;
+            background: #f8d7da;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .status-badge {
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9em;
+        }
+
+        .status-badge.pass {
+            background: #28a745;
+            color: white;
+        }
+
+        .status-badge.fail {
+            background: #dc3545;
+            color: white;
+        }
+
+        .confidence {
+            font-size: 0.9em;
+            color: #666;
+            margin-left: auto;
+        }
+
+        .reasons {
+            margin: 15px 0;
+        }
+
+        .reasons ul {
+            margin-left: 20px;
+        }
+
+        .reasons li {
+            margin-bottom: 5px;
+        }
+
+        .details {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            border: 1px solid #e9ecef;
+        }
+
+        .summary {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .summary h3 {
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #f5c6cb;
+            margin-top: 20px;
+        }
+
+        .api-config {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border-left: 4px solid #2196f3;
+        }
+
+        .api-config h3 {
+            margin-bottom: 10px;
+            color: #1976d2;
+        }
+
+        .api-config input {
+            margin-bottom: 10px;
+        }
+
+        .upload-method-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 2px solid #ddd;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 12px 20px;
+            background: #f8f9fa;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: #e9ecef;
+        }
+
+        .upload-section {
+            transition: opacity 0.3s;
+        }
+
+        .file-upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #fafafa;
+        }
+
+        .file-upload-area:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .file-upload-area.dragover {
+            border-color: #667eea;
+            background: #e3f2fd;
+            transform: scale(1.02);
+        }
+
+        .upload-placeholder {
+            color: #666;
+        }
+
+        .upload-icon {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        .file-types {
+            font-size: 0.9em;
+            color: #999;
+            margin-top: 10px;
+        }
+
+        .file-info {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+        }
+
+        .file-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .file-size {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .remove-file {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .remove-file:hover {
+            background: #c82333;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #e9ecef;
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #667eea;
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Content Moderation API</h1>
+            <p>Simple content moderation - just tells you if content is inappropriate or not</p>
+        </div>
+
+        <div class="content">
+            <div class="api-config">
+                <h3>API Configuration</h3>
+                <label for="apiUrl">API Base URL:</label>
+                <input type="url" id="apiUrl" value="http://localhost:8000" placeholder="http://localhost:8000">
+            </div>
+
+            <form id="moderationForm" class="form-section">
+                <div class="form-group">
+                    <label>Upload Method:</label>
+                    <div class="upload-method-tabs">
+                        <button type="button" class="tab-btn active" id="fileTab">Upload File</button>
+                        <button type="button" class="tab-btn" id="urlTab">From URL</button>
+                    </div>
+                </div>
+
+                <div id="fileUploadSection" class="upload-section">
+                    <div class="form-group">
+                        <label for="mediaFile">Select Media File:</label>
+                        <div class="file-upload-area" id="fileUploadArea">
+                            <input type="file" id="mediaFile" accept="image/*,video/*" style="display: none;">
+                            <div class="upload-placeholder">
+                                <div class="upload-icon">[FILE]</div>
+                                <p>Click to select a file or drag and drop</p>
+                                <p class="file-types">Supports: Images (JPG, PNG, GIF, WebP) and Videos (MP4, MOV, AVI)</p>
+                            </div>
+                            <div class="file-info" id="fileInfo" style="display: none;">
+                                <div class="file-name" id="fileName"></div>
+                                <div class="file-size" id="fileSize"></div>
+                                <button type="button" class="remove-file" id="removeFile">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="urlUploadSection" class="upload-section" style="display: none;">
+                    <div class="form-group">
+                        <label for="mediaUrl">Media URL:</label>
+                        <input type="url" id="mediaUrl" placeholder="https://example.com/image.jpg or https://example.com/video.mp4">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="mediaType">Media Type:</label>
+                        <select id="mediaType">
+                            <option value="">Select media type</option>
+                            <option value="image">Image</option>
+                            <option value="video">Video</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="mediaId">Media ID (optional):</label>
+                    <input type="text" id="mediaId" placeholder="my_media_001" style="border: 2px solid #ddd; padding: 12px; border-radius: 6px; width: 100%;">
+                </div>
+
+                <button type="submit" class="btn" id="submitBtn">Analyze Content</button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyzing content... This may take a few minutes for videos.</p>
+            </div>
+
+            <div class="results" id="results"></div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        let uploadMethod = 'file'; // 'file' or 'url'
+
+        // Tab switching functionality
+        document.getElementById('fileTab').addEventListener('click', function() {
+            switchToFileUpload();
+        });
+
+        document.getElementById('urlTab').addEventListener('click', function() {
+            switchToUrlUpload();
+        });
+
+        function switchToFileUpload() {
+            uploadMethod = 'file';
+            document.getElementById('fileTab').classList.add('active');
+            document.getElementById('urlTab').classList.remove('active');
+            document.getElementById('fileUploadSection').style.display = 'block';
+            document.getElementById('urlUploadSection').style.display = 'none';
+        }
+
+        function switchToUrlUpload() {
+            uploadMethod = 'url';
+            document.getElementById('urlTab').classList.add('active');
+            document.getElementById('fileTab').classList.remove('active');
+            document.getElementById('fileUploadSection').style.display = 'none';
+            document.getElementById('urlUploadSection').style.display = 'block';
+        }
+
+        // File upload functionality
+        const fileUploadArea = document.getElementById('fileUploadArea');
+        const fileInput = document.getElementById('mediaFile');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const removeFileBtn = document.getElementById('removeFile');
+
+        // Click to select file
+        fileUploadArea.addEventListener('click', function(e) {
+            if (e.target.classList.contains('remove-file')) return;
+            fileInput.click();
+        });
+
+        // File selection handler
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                handleFileSelection(file);
+            }
+        });
+
+        // Drag and drop functionality
+        fileUploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            fileUploadArea.classList.add('dragover');
+        });
+
+        fileUploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            fileUploadArea.classList.remove('dragover');
+        });
+
+        fileUploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            fileUploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileSelection(files[0]);
+            }
+        });
+
+        // Remove file handler
+        removeFileBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            selectedFile = null;
+            fileInput.value = '';
+            fileInfo.style.display = 'none';
+            document.querySelector('.upload-placeholder').style.display = 'block';
+        });
+
+        function handleFileSelection(file) {
+            // Validate file type
+            const validImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff'];
+            const validVideoTypes = ['video/mp4', 'video/mov', 'video/avi', 'video/mkv', 'video/webm'];
+            
+            if (!validImageTypes.includes(file.type) && !validVideoTypes.includes(file.type)) {
+                alert('Please select a valid image or video file.');
+                return;
+            }
+
+            selectedFile = file;
+            
+            // Display file info
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            
+            document.querySelector('.upload-placeholder').style.display = 'none';
+            fileInfo.style.display = 'flex';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        // Convert file to base64 data URL
+        function fileToDataUrl(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Main form submission
+        document.getElementById('moderationForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const apiUrl = document.getElementById('apiUrl').value;
+            const mediaId = document.getElementById('mediaId').value;
+            
+            // Validate input based on upload method
+            if (uploadMethod === 'file' && !selectedFile) {
+                alert('Please select a file to upload.');
+                return;
+            }
+            
+            if (uploadMethod === 'url') {
+                const mediaUrl = document.getElementById('mediaUrl').value;
+                const mediaType = document.getElementById('mediaType').value;
+                
+                if (!mediaUrl || !mediaType) {
+                    alert('Please provide both media URL and type.');
+                    return;
+                }
+            }
+            
+            // Show loading state
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('submitBtn').disabled = true;
+            
+            try {
+                let requestBody;
+                
+                if (uploadMethod === 'file') {
+                    // For file upload, we need to convert to data URL
+                    const dataUrl = await fileToDataUrl(selectedFile);
+                    const mediaType = selectedFile.type.startsWith('image/') ? 'image' : 'video';
+                    
+                    requestBody = {
+                        media_list: [{
+                            url: dataUrl,
+                            type: mediaType,
+                            id: mediaId || selectedFile.name
+                        }]
+                    };
+                } else {
+                    // For URL upload
+                    const mediaUrl = document.getElementById('mediaUrl').value;
+                    const mediaType = document.getElementById('mediaType').value;
+                    
+                    requestBody = {
+                        media_list: [{
+                            url: mediaUrl,
+                            type: mediaType,
+                            id: mediaId || undefined
+                        }]
+                    };
+                }
+
+                console.log('Sending request:', { ...requestBody, media_list: [{ ...requestBody.media_list[0], url: requestBody.media_list[0].url.substring(0, 50) + '...' }] });
+
+                const response = await fetch(`${apiUrl}/moderate`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+                console.log('Response:', data);
+
+                if (response.ok) {
+                    displayResults(data);
+                } else {
+                    const errorMessage = data.detail || JSON.stringify(data);
+                    displayError(`API Error (${response.status}): ${errorMessage}`);
+
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                displayError(`Network Error: ${error.message}. Make sure the API server is running on ${apiUrl}`);
+            } finally {
+                // Hide loading state
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('submitBtn').disabled = false;
+            }
+        });
+
+        function displayResults(data) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '';
+
+            // Summary section
+            const summary = document.createElement('div');
+            summary.className = 'summary';
+            summary.innerHTML = `
+                <h3>Analysis Summary</h3>
+                <p><strong>Total Processed:</strong> ${data.total_processed}</p>
+                <p><strong>Passed:</strong> ${data.total_passed}</p>
+                <p><strong>Failed:</strong> ${data.total_failed}</p>
+                <p><strong>Processing Time:</strong> ${data.processing_time_ms}ms</p>
+            `;
+            resultsDiv.appendChild(summary);
+
+            // Individual results
+            data.results.forEach(result => {
+                const resultCard = document.createElement('div');
+                resultCard.className = `result-card ${result.status.toLowerCase()}`;
+                
+                const reasonsList = result.reasons.map(reason => `<li>${reason}</li>`).join('');
+                
+                resultCard.innerHTML = `
+                    <div class="result-header">
+                        <h3>${result.media_id}</h3>
+                        <span class="status-badge ${result.status.toLowerCase()}">${result.status}</span>
+                        <span class="confidence">Confidence: ${(result.confidence * 100).toFixed(1)}%</span>
+                    </div>
+                    
+                    <div class="reasons">
+                        <strong>Analysis Results:</strong>
+                        <ul>${reasonsList}</ul>
+                    </div>
+                    
+                    <p><strong>Processing Time:</strong> ${result.processing_time_ms}ms</p>
+                `;
+                
+                resultsDiv.appendChild(resultCard);
+            });
+
+            resultsDiv.style.display = 'block';
+        }
+
+        function displayError(message) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <div class="error">
+                    <h3>Error</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+            resultsDiv.style.display = 'block';
+        }
+
+        // Auto-detect media type based on URL (only for URL upload method)
+        document.getElementById('mediaUrl').addEventListener('input', function(e) {
+            if (uploadMethod !== 'url') return;
+            
+            const url = e.target.value.toLowerCase();
+            const mediaTypeSelect = document.getElementById('mediaType');
+            
+            if (url.match(/\.(jpg|jpeg|png|gif|webp|bmp|tiff)(\?|$)/)) {
+                mediaTypeSelect.value = 'image';
+            } else if (url.match(/\.(mp4|mov|avi|mkv|webm)(\?|$)/)) {
+                mediaTypeSelect.value = 'video';
+            }
+        });
+
+        // Generate random media ID if none provided
+        document.getElementById('moderationForm').addEventListener('submit', function(e) {
+            const mediaIdInput = document.getElementById('mediaId');
+            if (!mediaIdInput.value) {
+                if (uploadMethod === 'file' && selectedFile) {
+                    mediaIdInput.value = selectedFile.name.replace(/\.[^/.]+$/, '') + '_' + Date.now();
+                } else {
+                    mediaIdInput.value = `media_${Date.now()}`;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
